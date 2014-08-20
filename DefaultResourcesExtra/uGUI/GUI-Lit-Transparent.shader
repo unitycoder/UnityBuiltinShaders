@@ -9,6 +9,9 @@ Shader "uGUI/Lit/Transparent"
 		_StencilComp ("Stencil Comparison", Float) = 8
 		_Stencil ("Stencil ID", Float) = 0
 		_StencilOp ("Stencil Operation", Float) = 0
+		_StencilWriteMask ("Stencil Write Mask", Float) = 255
+		_StencilReadMask ("Stencil Read Mask", Float) = 255
+
 		_ColorMask ("Color Mask", Float) = 15
 	}
 	
@@ -21,13 +24,16 @@ Shader "uGUI/Lit/Transparent"
 			"Queue" = "Transparent"
 			"IgnoreProjector" = "True"
 			"RenderType" = "Transparent"
+			"PreviewType"="Plane"
 		}
 
 		Stencil
 		{
 			Ref [_Stencil]
 			Comp [_StencilComp]
-			Pass [_StencilOp]
+			Pass [_StencilOp] 
+			ReadMask [_StencilReadMask]
+			WriteMask [_StencilWriteMask]
 		}
 		
 		Cull Off
@@ -41,39 +47,30 @@ Shader "uGUI/Lit/Transparent"
 		ColorMask [_ColorMask]
 
 		CGPROGRAM
-			#pragma surface surf PPL alpha vertex:vert
+			#pragma surface surf PPL alpha
 			#include "UnityCG.cginc"
 	
 			struct appdata_t
 			{
 				float4 vertex : POSITION;
-				float2 texcoord1 : TEXCOORD0;
+				float2 texcoord : TEXCOORD0;
 				float3 normal : NORMAL;
 				fixed4 color : COLOR;
 			};
 	
 			struct Input
 			{
-				float4 vertex : SV_POSITION;
-				float2 texcoord1 : TEXCOORD0;
+				half2 uv_MainTex;
 				fixed4 color : COLOR;
 			};
 
 			sampler2D _MainTex;
-			float4 _MainTex_ST;
 			fixed4 _Color;
 			fixed4 _Specular;
 				
-			void vert (inout appdata_t v, out Input o)
-			{
-				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
-				o.texcoord1 = TRANSFORM_TEX(v.texcoord1, _MainTex);
-				o.color = v.color;
-			}
-				
 			void surf (Input IN, inout SurfaceOutput o)
 			{
-				fixed4 col = tex2D(_MainTex, IN.texcoord1.xy) * _Color * IN.color;
+				fixed4 col = tex2D(_MainTex, IN.uv_MainTex) * _Color * IN.color;
 				o.Albedo = col.rgb;
 				o.Alpha = col.a;
 			}
